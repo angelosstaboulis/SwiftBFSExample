@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import GameplayKit
 fileprivate let knightMoves = [
     [ 2, -1],
     [ 2,  1],
@@ -16,21 +17,25 @@ fileprivate let knightMoves = [
     [-1,  2],
     [-1, -2]
 ]
-
-struct Node:Equatable,Hashable{
+class Node:GKGraphNode{
     let x:Int
     let y:Int
     let dist:Int
-    init(x:Int,y:Int,dist:Int=0 ) {
+    init(x:Int,y:Int,dist:Int=0) {
         self.x = x
         self.y = y
         self.dist = dist
+        super.init()
     }
-    static func == (lhs:Node,rhs:Node) -> Bool{
-        lhs.x == rhs.x && lhs.y == rhs.y
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
-    func hash(into hasher: inout Hasher) {
-        
+    public func addConnections(nodesArray: [GKGraphNode], bidirectional: Bool) {
+        super.addConnections(to: nodesArray, bidirectional: bidirectional)
+    }
+    public func removeConnections(nodesArray: [GKGraphNode], bidirectional: Bool) {
+        super.removeConnections(to: nodesArray, bidirectional: bidirectional)
     }
 }
 class Queue{
@@ -52,22 +57,31 @@ class Queue{
         }
     }
 }
-
-func bfs(src:Node,dest:Node) -> Int{
-    var visited:[Node:Bool] = [:]
-    let queue = Queue(list: [Node]())
-    queue.enquee(data: src)
-    while !queue.list.isEmpty{
-        let node = queue.dequee()
-        if node.x == dest.x && node.y == dest.y { return node.dist}
-        if visited[node] == nil {
-            visited[node] = true
-            for item in 0..<knightMoves.count{
-                queue.enquee(data: Node(x: node.x + knightMoves[item][0], y: node.y + knightMoves[item][1], dist: node.dist + 1))
+class Graph:GKGraph{
+     public func findPaths(from startNode: GKGraphNode, to endNode: GKGraphNode) -> [GKGraphNode]
+    {
+        super.findPath(from: startNode, to: endNode)
+    }
+    func bfs(src:Node,dest:Node) -> Int{
+        var visited:[Node:Bool] = [:]
+        let queue = Queue(list: [Node]())
+        queue.enquee(data: src)
+        while !queue.list.isEmpty{
+            let node = queue.dequee()
+            if node.x == dest.x && node.y == dest.y { return node.dist}
+            if visited[node] == nil {
+                visited[node] = true
+                for item in 0..<knightMoves.count{
+                    queue.enquee(data: Node(x: node.x + knightMoves[item][0], y: node.y + knightMoves[item][1], dist: node.dist + 1))
+                }
             }
         }
+        return -1
     }
-    return -1
 }
-let a = bfs(src:Node(x: 0, y: 0),dest:Node(x: 7, y: 0))
+
+let nodeSrc = Node(x: 0, y: 0)
+let nodeDest = Node(x: 7, y: 0)
+let graph = Graph([nodeSrc,nodeDest])
+let a = graph.bfs(src: nodeSrc, dest: nodeDest)
 debugPrint("minimum steps=",a)
